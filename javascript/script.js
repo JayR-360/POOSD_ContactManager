@@ -34,64 +34,47 @@ function toggleAuth() {
     }
 }
 
+let userID = 0;
+let firstName = "";
+let lastName = "";
 
-document.addEventListener("DOMContentLoaded", function () {
-    document.getElementById("searchButton").addEventListener("click", function () {
-        searchContacts();
-    });
-});
+function SearchContacts()
+{
+    let srch = document.getElementById("").value;
+    document.getEklementById("contactSearchResult").innerHTML = srch;
 
-function searchContacts() {
-    const searchTitle = document.getElementById('search-title');
-    const searchForm = document.getElementById('search-form');
-    const searchText = document.querySelector('.search__text');
-    const searchInput = document.getElementById("searchInput");
+    let contactList = "";
 
-    if (!searchInput || searchInput.value.trim() === ""){
-        alert("Please enter a search term.");
-        return;
+    let tmp = {search:srch, userID:userID};
+    let jsonPayload = JSON.stringify(tmp);
+
+    let url = urlBase + '/SearchContacts.' + extension;
+    let xhr = new XMLHttpRequest();
+    xhr.open("POST", url, true);
+    xhr.setRequestHeader("Content-type", "application/json; charset=UTF-8");
+    try 
+    {
+        xhr.onreadystatechange = function() 
+        {
+            if (this.readyState == 4 && this.status == 200) 
+            {
+                document.getElementById("contactSearchResult").innerHTML = "Contact(s) has been retrieved";
+                let jsonObject = JSON.parse(xhr.responseText);
+
+                for( let i=0; i<jsonObject.results.length; i++ )
+                {
+                    contactList += jsonObject.results[i];
+                    if (i < jsonObject.results.length - 1) {
+                        contactList += "<br />\r\n";
+                    }
+                }
+                document.getElementById("contactSearchResult").innerHTML = contactList;
+            }
+        };
+        xhr.send(jsonPayload);
     }
-
-    fetch ("search.php", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ searchTerm: searchInput.value })
-    })
-    .then(response => response.json())
-    .then (data => {
-        if (data.error){
-            alert("No records found.")
-        }
-        else {
-            console.log("Search results:", data.results);
-        }
-    })
-    .catch(error => {
-        console.error("Error during search:", error);
-        alert("An error occurrred during the search.");
-    });
-
-    if (searchTitle.textContent === "Search Contacts") {
-        searchTitle.textContent = "Enter Search Term";
-        searchForm.innerHTML = `
-            <div class="search__group">
-                <label class="search__label" for="searchInput">Search</label>
-                <input class="search__input" type="text" id="searchInput" required>
-            </div>
-            <button type="submit" class="search__button">Search</button>
-        `;
-        toggleText.textContent = "Clear Search";
-    } else {
-        searchTitle.textContent = "Search Contacts";
-        searchForm.innerHTML = `
-            <div class="search__group">
-                <label class="search__label" for="searchInput">Search</label>
-                <input class="search__input" type="text" id="searchInput" required>
-            </div>
-            <button type="submit" class="search__button">Search</button>
-        `;
-        toggleText.textContent = "Enter Search Term";
+    catch(err)
+    {
+        document.getElementById("contactSearchResult").innerHTML = err.message;
     }
 }
